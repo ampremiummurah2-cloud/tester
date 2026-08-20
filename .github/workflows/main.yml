@@ -1,4 +1,4 @@
-name: Multi-Method Guardian
+name: 🚀 Multi-Method Guardian Pro
 
 on:
   schedule:
@@ -6,102 +6,281 @@ on:
   workflow_dispatch:
 
 env:
-  SPACE_URL: "https://sigitganteng-kekasih.hf.space/"
   TIMEOUT: 180
+  RETRY_DELAY: 20
+  MAX_RETRIES: 3
 
 jobs:
   multi-ping:
-    name: Multi-Method Ping
+    name: 🛡️ Advanced Multi-Space Guardian
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 5
     steps:
-      - name: Multi-Method Ping dengan Fallback
+      - name: 🔍 Advanced Multi-Method Ping dengan Full Detection
         id: ping
         continue-on-error: true
         run: |
-          echo "🔄 Memulai multi-method ping (20 menit)..."
+          echo "======================================================================"
+          echo "🚀 MULTI-METHOD GUARDIAN PRO v3.0"
+          echo "======================================================================"
+          echo "⏰ Waktu: $(date '+%Y-%m-%d %H:%M:%S %Z')"
+          echo "🔥 Mode: Full Detection + Redirect Follower"
           echo ""
           
+          # DAFTAR SPACE (URUTAN PRIORITAS)
+          SPACES=(
+            "https://sigitganteng-zerobot.hf.space/"
+            "https://sigitganteng-bot.hf.space/"
+          )
+          
           METHODS=("HEAD" "GET" "POST" "IFRAME" "HEALTH")
-          STATUSES=()
+          FINAL_STATUS=()
           
-          for METHOD in "${METHODS[@]}"; do
-            echo "📡 Mencoba metode: $METHOD"
+          for SPACE_URL in "${SPACES[@]}"; do
+            echo "======================================================================"
+            echo "🎯 TARGET SPACE: $SPACE_URL"
+            echo "======================================================================"
             
-            case $METHOD in
-              "HEAD")
-                RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 \
-                  -H "User-Agent: GitHub-Actions-Guardian/2.0" \
-                  -I "${{ env.SPACE_URL }}" 2>/dev/null)
-                ;;
-              "GET")
-                RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" --max-time ${{ env.TIMEOUT }} \
-                  -H "User-Agent: GitHub-Actions-Guardian/2.0" \
-                  -L "${{ env.SPACE_URL }}" 2>/dev/null)
-                ;;
-              "POST")
-                RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 \
-                  -X POST \
-                  -H "User-Agent: GitHub-Actions-Guardian/2.0" \
-                  -H "Content-Type: application/json" \
-                  -d '{"ping":"keepalive"}' \
-                  "${{ env.SPACE_URL }}" 2>/dev/null)
-                ;;
-              "IFRAME")
-                RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 \
-                  -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" \
-                  -H "Accept: text/html" \
-                  "${{ env.SPACE_URL }}" 2>/dev/null)
-                ;;
-              "HEALTH")
-                RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 \
-                  "${{ env.SPACE_URL }}/api/health" 2>/dev/null || echo "404")
-                ;;
-            esac
+            # Ekstrak nama Space dari URL
+            SPACE_NAME=$(echo "$SPACE_URL" | sed -E 's|https?://([^/]+).*|\1|')
+            echo "📦 Nama Space: $SPACE_NAME"
             
-            STATUSES+=("$METHOD:$RESPONSE")
-            echo "   ➡️ Status: $RESPONSE"
+            SUCCESS=false
+            TOTAL_RETRIES=0
+            STATUS_HISTORY=()
+            REDIRECT_CHAIN=()
             
-            if [[ $RESPONSE =~ ^2[0-9][0-9]$ ]] || [[ $RESPONSE == "206" ]]; then
-              echo "✅ Berhasil dengan metode $METHOD (Status: $RESPONSE)"
-              echo "success_method=$METHOD" >> $GITHUB_OUTPUT
-              echo "success_status=$RESPONSE" >> $GITHUB_OUTPUT
-              break
-            fi
+            for METHOD in "${METHODS[@]}"; do
+              # Reset retry counter per metode
+              RETRY_COUNT=0
+              METHOD_SUCCESS=false
+              
+              while [ $RETRY_COUNT -lt $MAX_RETRIES ] && [ "$METHOD_SUCCESS" = false ]; do
+                echo ""
+                echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                echo "📡 Metode: $METHOD (Percobaan $((RETRY_COUNT+1))/$MAX_RETRIES)"
+                echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                
+                # Simpan URL awal untuk tracking redirect
+                CURRENT_URL="$SPACE_URL"
+                FINAL_RESPONSE=""
+                REDIRECT_COUNT=0
+                MAX_REDIRECTS=5
+                
+                case $METHOD in
+                  "HEAD")
+                    echo "🔍 Mengirim HEAD request (ringan)..."
+                    RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 \
+                      -H "User-Agent: GitHub-Actions-Guardian-Pro/3.0" \
+                      -H "Accept: */*" \
+                      -I "$CURRENT_URL" 2>/dev/null)
+                    
+                    # Deteksi redirect
+                    REDIRECT_URL=$(curl -s -o /dev/null -w "%{redirect_url}" --max-time 30 \
+                      -H "User-Agent: GitHub-Actions-Guardian-Pro/3.0" \
+                      -I "$CURRENT_URL" 2>/dev/null)
+                    ;;
+                    
+                  "GET")
+                    echo "🌐 Mengirim GET request (full load)..."
+                    RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" --max-time ${{ env.TIMEOUT }} \
+                      -H "User-Agent: GitHub-Actions-Guardian-Pro/3.0" \
+                      -H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8" \
+                      -H "Accept-Language: en-US,en;q=0.9" \
+                      -L "$CURRENT_URL" 2>/dev/null)
+                    
+                    REDIRECT_URL=$(curl -s -o /dev/null -w "%{redirect_url}" --max-time ${{ env.TIMEOUT }} \
+                      -H "User-Agent: GitHub-Actions-Guardian-Pro/3.0" \
+                      "$CURRENT_URL" 2>/dev/null)
+                    ;;
+                    
+                  "POST")
+                    echo "📤 Mengirim POST request..."
+                    RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 \
+                      -X POST \
+                      -H "User-Agent: GitHub-Actions-Guardian-Pro/3.0" \
+                      -H "Content-Type: application/json" \
+                      -H "Accept: application/json" \
+                      -d '{"ping":"keepalive","timestamp":"'$(date -Iseconds)'"}' \
+                      "$CURRENT_URL" 2>/dev/null)
+                    
+                    REDIRECT_URL=$(curl -s -o /dev/null -w "%{redirect_url}" --max-time 30 \
+                      -X POST \
+                      -H "User-Agent: GitHub-Actions-Guardian-Pro/3.0" \
+                      -H "Content-Type: application/json" \
+                      -d '{"ping":"keepalive"}' \
+                      "$CURRENT_URL" 2>/dev/null)
+                    ;;
+                    
+                  "IFRAME")
+                    echo "🖼️ Mengirim IFRAME-style request..."
+                    RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 \
+                      -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" \
+                      -H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8" \
+                      -H "Sec-Fetch-Dest: iframe" \
+                      -H "Sec-Fetch-Mode: navigate" \
+                      "$CURRENT_URL" 2>/dev/null)
+                    
+                    REDIRECT_URL=$(curl -s -o /dev/null -w "%{redirect_url}" --max-time 30 \
+                      -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" \
+                      "$CURRENT_URL" 2>/dev/null)
+                    ;;
+                    
+                  "HEALTH")
+                    echo "🏥 Mengecek endpoint kesehatan..."
+                    RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 \
+                      "$CURRENT_URL/api/health" 2>/dev/null || echo "404")
+                    
+                    REDIRECT_URL=$(curl -s -o /dev/null -w "%{redirect_url}" --max-time 30 \
+                      "$CURRENT_URL/api/health" 2>/dev/null)
+                    ;;
+                esac
+                
+                # Track redirect chain
+                if [ -n "$REDIRECT_URL" ] && [ "$REDIRECT_URL" != "$CURRENT_URL" ] && [ "$REDIRECT_URL" != "" ]; then
+                  echo "🔄 Redirect terdeteksi ke: $REDIRECT_URL"
+                  REDIRECT_CHAIN+=("$REDIRECT_URL")
+                  
+                  # Cek apakah redirect ke login/dashboard
+                  if [[ "$REDIRECT_URL" == *"/login"* ]] || [[ "$REDIRECT_URL" == *"/dashboard"* ]]; then
+                    echo "🔐 Redirect ke halaman login/dashboard - Space dalam mode maintenance/sleep"
+                  fi
+                fi
+                
+                echo "📡 HTTP Status: $RESPONSE"
+                STATUS_HISTORY+=("$METHOD:$RESPONSE")
+                
+                # Interpretasi status dengan detail
+                case $RESPONSE in
+                  200|201|202|203|204|205|206)
+                    echo "✅ ✅ ✅ SPACE AKTIF! (Status $RESPONSE)"
+                    METHOD_SUCCESS=true
+                    SUCCESS=true
+                    FINAL_RESPONSE="$RESPONSE"
+                    break
+                    ;;
+                  301|302|303|307|308)
+                    echo "🔄 Redirect permanent/temporary (Status $RESPONSE)"
+                    echo "📍 Meneruskan ke redirect..."
+                    # Lanjut ke metode berikutnya setelah redirect
+                    ;;
+                  400)
+                    echo "⚠️ Bad Request - Mungkin endpoint salah"
+                    ;;
+                  401)
+                    echo "🔒 Unauthorized - Space memerlukan autentikasi"
+                    ;;
+                  403)
+                    echo "🚫 Forbidden - Akses ditolak (mungkin private space)"
+                    ;;
+                  404)
+                    echo "🔍 Not Found - Mungkin Space dalam proses build"
+                    ;;
+                  429)
+                    echo "🐢 Too Many Requests - Rate limited, menunggu..."
+                    sleep 10
+                    ;;
+                  500|502|503|504)
+                    echo "⏳ Server Error ($RESPONSE) - Space sedang cold start/overload"
+                    ;;
+                  *)
+                    echo "❓ Status tidak dikenal: $RESPONSE"
+                    ;;
+                esac
+                
+                # Jika 503, kasih waktu untuk cold start
+                if [[ "$RESPONSE" == "503" ]] || [[ "$RESPONSE" == "504" ]]; then
+                  echo "⏳ Cold start terdeteksi, memberikan waktu ${{ env.RETRY_DELAY }} detik..."
+                  sleep ${{ env.RETRY_DELAY }}
+                fi
+                
+                RETRY_COUNT=$((RETRY_COUNT + 1))
+                
+                if [ "$METHOD_SUCCESS" = false ] && [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                  echo "🔄 Retry metode $METHOD dalam 5 detik..."
+                  sleep 5
+                fi
+              done
+              
+              # Jika metode berhasil, stop semua metode
+              if [ "$SUCCESS" = true ]; then
+                echo ""
+                echo "🎉 SPACE BERHASIL DIAKTIFKAN!"
+                echo "✅ Metode berhasil: $METHOD"
+                echo "📡 Status akhir: $FINAL_RESPONSE"
+                break
+              fi
+              
+              echo ""
+            done
             
-            if [[ $RESPONSE =~ ^3[0-9][0-9]$ ]]; then
-              echo "🔄 Redirect terdeteksi, mengikuti..."
-              REDIRECT_URL=$(curl -s -o /dev/null -w "%{redirect_url}" "${{ env.SPACE_URL }}" 2>/dev/null)
-              echo "   ➡️ Redirect ke: $REDIRECT_URL"
-            fi
-            
-            if [[ $RESPONSE == "503" ]]; then
-              echo "⏳ Cold start terdeteksi, menunggu 20 detik..."
-              sleep 20
-            fi
-            
+            # Ringkasan per Space
             echo ""
+            echo "─────────────────────────────────────────────────────"
+            echo "📊 RINGKASAN AKHIR UNTUK $SPACE_NAME"
+            echo "─────────────────────────────────────────────────────"
+            echo "🔍 Status history:"
+            for STATUS in "${STATUS_HISTORY[@]}"; do
+              echo "   - $STATUS"
+            done
+            
+            if [ ${#REDIRECT_CHAIN[@]} -gt 0 ]; then
+              echo "🔄 Redirect chain:"
+              for REDIRECT in "${REDIRECT_CHAIN[@]}"; do
+                echo "   ➡️ $REDIRECT"
+              done
+            fi
+            
+            if [ "$SUCCESS" = true ]; then
+              echo "✅ STATUS: SPACE AKTIF"
+              FINAL_STATUS+=("$SPACE_NAME:✅ AKTIF")
+            else
+              echo "❌ STATUS: GAGAL (Semua metode tidak berhasil)"
+              FINAL_STATUS+=("$SPACE_NAME:❌ GAGAL")
+            fi
+            echo "─────────────────────────────────────────────────────"
+            echo ""
+            
+            # Output ke GitHub
+            if [ "$SUCCESS" = true ]; then
+              echo "space_${SPACE_NAME}_status=success" >> $GITHUB_OUTPUT
+            else
+              echo "space_${SPACE_NAME}_status=failed" >> $GITHUB_OUTPUT
+            fi
           done
           
-          echo "📊 Ringkasan semua metode:"
-          for STATUS in "${STATUSES[@]}"; do
-            echo "   - $STATUS"
+          # Ringkasan Final Semua Space
+          echo "======================================================================"
+          echo "📋 RINGKASAN FINAL - SEMUA SPACE"
+          echo "======================================================================"
+          echo "⏰ Waktu selesai: $(date '+%Y-%m-%d %H:%M:%S %Z')"
+          echo ""
+          for STATUS in "${FINAL_STATUS[@]}"; do
+            echo "   $STATUS"
           done
-          
-          if [ -z "${{ steps.ping.outputs.success_method }}" ]; then
-            echo "❌ Semua metode gagal!"
-            echo "success_method=none" >> $GITHUB_OUTPUT
-            echo "success_status=000" >> $GITHUB_OUTPUT
-          fi
+          echo "======================================================================"
       
-      - name: 📊 Summary Report
+      - name: 📊 Generate Advanced Summary Report
         if: always()
         run: |
-          echo "### 📋 Multi-Method Report" >> $GITHUB_STEP_SUMMARY
+          echo "# 🚀 Multi-Method Guardian Pro - Laporan Monitoring" > $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 📋 Ringkasan Eksekusi" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Metrik | Nilai |" >> $GITHUB_STEP_SUMMARY
           echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| 🎯 Target | ${{ env.SPACE_URL }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| ✅ Metode Berhasil | ${{ steps.ping.outputs.success_method || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| 📡 Status Akhir | ${{ steps.ping.outputs.success_status || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🕐 Waktu | $(date '+%Y-%m-%d %H:%M:%S %Z') |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🕐 Waktu Eksekusi | $(date '+%Y-%m-%d %H:%M:%S %Z') |" >> $GITHUB_STEP_SUMMARY
+          echo "| 📦 Total Space | 2 |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔄 Metode yang Dicoba | HEAD, GET, POST, IFRAME, HEALTH |" >> $GITHUB_STEP_SUMMARY
+          echo "| ⏱️ Timeout | 180 detik |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔁 Max Retry | 3 kali per metode |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 🎯 Status Per Space" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Space | Status | Detail |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 🚀 zerobot | ${{ steps.ping.outputs.space_https_sigitganteng-zerobot_hf_space__status || 'N/A' }} | Multi-method ping |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🤖 bot | ${{ steps.ping.outputs.space_https_sigitganteng-bot_hf_space__status || 'N/A' }} | Multi-method ping |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "_Laporan ini dihasilkan otomatis oleh GitHub Actions_ 🤖" >> $GITHUB_STEP_SUMMARY
