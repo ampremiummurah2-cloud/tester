@@ -1,0 +1,107 @@
+name: Multi-Method Guardian
+
+on:
+  schedule:
+    - cron: "*/20 * * * *"
+  workflow_dispatch:
+
+env:
+  SPACE_URL: "https://sigitganteng-kekasih.hf.space/"
+  TIMEOUT: 180
+
+jobs:
+  multi-ping:
+    name: Multi-Method Ping
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Multi-Method Ping dengan Fallback
+        id: ping
+        continue-on-error: true
+        run: |
+          echo "🔄 Memulai multi-method ping (20 menit)..."
+          echo ""
+          
+          METHODS=("HEAD" "GET" "POST" "IFRAME" "HEALTH")
+          STATUSES=()
+          
+          for METHOD in "${METHODS[@]}"; do
+            echo "📡 Mencoba metode: $METHOD"
+            
+            case $METHOD in
+              "HEAD")
+                RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 \
+                  -H "User-Agent: GitHub-Actions-Guardian/2.0" \
+                  -I "${{ env.SPACE_URL }}" 2>/dev/null)
+                ;;
+              "GET")
+                RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" --max-time ${{ env.TIMEOUT }} \
+                  -H "User-Agent: GitHub-Actions-Guardian/2.0" \
+                  -L "${{ env.SPACE_URL }}" 2>/dev/null)
+                ;;
+              "POST")
+                RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 \
+                  -X POST \
+                  -H "User-Agent: GitHub-Actions-Guardian/2.0" \
+                  -H "Content-Type: application/json" \
+                  -d '{"ping":"keepalive"}' \
+                  "${{ env.SPACE_URL }}" 2>/dev/null)
+                ;;
+              "IFRAME")
+                RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 \
+                  -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" \
+                  -H "Accept: text/html" \
+                  "${{ env.SPACE_URL }}" 2>/dev/null)
+                ;;
+              "HEALTH")
+                RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 \
+                  "${{ env.SPACE_URL }}/api/health" 2>/dev/null || echo "404")
+                ;;
+            esac
+            
+            STATUSES+=("$METHOD:$RESPONSE")
+            echo "   ➡️ Status: $RESPONSE"
+            
+            if [[ $RESPONSE =~ ^2[0-9][0-9]$ ]] || [[ $RESPONSE == "206" ]]; then
+              echo "✅ Berhasil dengan metode $METHOD (Status: $RESPONSE)"
+              echo "success_method=$METHOD" >> $GITHUB_OUTPUT
+              echo "success_status=$RESPONSE" >> $GITHUB_OUTPUT
+              break
+            fi
+            
+            if [[ $RESPONSE =~ ^3[0-9][0-9]$ ]]; then
+              echo "🔄 Redirect terdeteksi, mengikuti..."
+              REDIRECT_URL=$(curl -s -o /dev/null -w "%{redirect_url}" "${{ env.SPACE_URL }}" 2>/dev/null)
+              echo "   ➡️ Redirect ke: $REDIRECT_URL"
+            fi
+            
+            if [[ $RESPONSE == "503" ]]; then
+              echo "⏳ Cold start terdeteksi, menunggu 20 detik..."
+              sleep 20
+            fi
+            
+            echo ""
+          done
+          
+          echo "📊 Ringkasan semua metode:"
+          for STATUS in "${STATUSES[@]}"; do
+            echo "   - $STATUS"
+          done
+          
+          if [ -z "${{ steps.ping.outputs.success_method }}" ]; then
+            echo "❌ Semua metode gagal!"
+            echo "success_method=none" >> $GITHUB_OUTPUT
+            echo "success_status=000" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: 📊 Summary Report
+        if: always()
+        run: |
+          echo "### 📋 Multi-Method Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metrik | Nilai |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 🎯 Target | ${{ env.SPACE_URL }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| ✅ Metode Berhasil | ${{ steps.ping.outputs.success_method || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 📡 Status Akhir | ${{ steps.ping.outputs.success_status || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🕐 Waktu | $(date '+%Y-%m-%d %H:%M:%S %Z') |" >> $GITHUB_STEP_SUMMARY
